@@ -1,0 +1,92 @@
+#===========================================================================
+#  Copyright (c) 2011-2016, 2017 QUALCOMM Technologies Incorporated.
+#  All Rights Reserved.
+#  Qualcomm Confidential and Proprietary
+#===========================================================================
+#
+#
+# GENERAL DESCRIPTION
+#    build script
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+
+#-------------------------------------------------------------------------------
+# Source PATH
+#-------------------------------------------------------------------------------
+import os
+
+Import('env')
+env = env.Clone()
+if env['PROC'] == 'scorpion':
+  env.Replace(LIB_OUT_DIR = '${BUILD_ROOT}/ssg/bsp/trustzone/qsapps/sampleta/build/${SHORT_BUILDPATH}')
+else:
+  env.Replace(LIB_OUT_DIR = '${BUILD_ROOT}/ssg/bsp/trustzone/qsapps/smplta64/build/${SHORT_BUILDPATH}')
+
+env.Append(CCFLAGS = ' -DTEE_QSEE ')
+#------------------------------------------------------------------------------
+# We need to specify "neon" to generate SIMD instructions in 32-bit mode
+#------------------------------------------------------------------------------
+
+includes = ['#../../core/api/kernel/libstd/stringl',
+            '#../../ssg/api/securemsm/trustzone/gp',
+            '#../../ssg/securemsm/trustzone/qsapps/libs/applib/qsee/src',
+            '#../../ssg/securemsm/trustzone/qsapps/libs/biometric/inc',
+            '#../../ssg/securemsm/trustzone/qsee/mink/include',
+            '#../../ssg/securemsm/trustzone/qsapps/common',
+            './inc'
+           ]
+
+sources = [
+        './src/app_main.c',
+        './src/hw_core.c',
+        './src/hw_driver.c',
+        './platform/qsee.c',
+]
+
+deploy_sources = []
+deploy_sources.extend(sources)
+
+if env['PROC'] == 'scorpion':
+  env.Append(CCFLAGS = " -mfpu=neon ")
+  target_name = 'sampleta'
+  uuid_name = '58616D70-6C65-4170-7000-000000000032'
+else:
+  target_name = 'smplta64'
+  uuid_name = '58616D70-6C65-4170-7000-000000000064'
+
+md = {
+   'appName':    'fingerprint',
+   'UUID':       uuid_name,
+   'privileges': ['default',
+                  'I2C',
+                  'OEMUnwrapKeys',
+                  'SPI',
+                  'SPCOM',
+                  'TLMM',
+                  'OEMBuf',
+                 ],
+  'heapSize': 0x2B0000,
+  'storageFilesNoPersist': True,
+  'totalStorageFiles': 2000
+}
+
+if env['PROC'] == 'scorpion':
+  md['memoryType'] = 'Unprotected'
+
+s_units = env.SecureAppBuilder(
+  sources = sources,
+  includes = includes,
+  metadata = md,
+  image = target_name,
+  deploy_sources = deploy_sources + ['SConscript'],
+  deploy_variants = env.GetDefaultPublicVariants()
+)
+
+op = env.Alias(target_name, s_units)
