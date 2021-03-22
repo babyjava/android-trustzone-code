@@ -50,9 +50,10 @@ static void collect_data(uint32_t cmd, uint32_t t)
 static void print_data(void)
 {
     int i = 0;
+    uint32_t avg_t;
     for(i = 0;i < TEE_CMD_END; i++)
     {
-        int avg_t = g_perf[i].cmd_cost_total_time/g_perf[i].cmd_run_times;
+        avg_t = g_perf[i].cmd_cost_total_time/g_perf[i].cmd_run_times;
         ALOGD("cmd = %d, run times = %d, max time = %d, avg time = %d\n", i, g_perf[i].cmd_run_times, g_perf[i].cmd_cost_max_time, avg_t);
     }
 }
@@ -69,8 +70,8 @@ static void random_stability_performance_test(int times)
         gettimeofday(&tv1,NULL);
         g_device.tee_cmd(&g_device, &in, &out);
         gettimeofday(&tv2,NULL);
-        if_err(out.status != GENERIC_OK, break;, "%s %d", out.sys_err_line, out.sys_err);
         time_cost = tv2.tv_usec - tv1.tv_usec;
+        if_err(out.status != GENERIC_OK, break;, "%s %d", out.sys_err_line, out.sys_err);
         collect_data(in.cmd, time_cost);
     }
     print_data();

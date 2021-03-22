@@ -52,7 +52,7 @@ struct tee_performance_record
 {
     uint32_t cmd_run_times;
     uint32_t cmd_cost_max_time;
-    uint32_t cmd_cost_total_time;
+    uint64_t cmd_cost_total_time;
 };
 
 int gp_client_open(struct tee_client_device *dev);
