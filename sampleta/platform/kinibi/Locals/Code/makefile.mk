@@ -20,6 +20,11 @@ TA_KEYFILE := Locals/Build/pairVendorTltSig.pem
 TA_DEBUGGABLE := Y
 HEAP_SIZE_INIT := 1048576
 HEAP_SIZE_MAX := 1048576
+SAMPLETA_PLATFORM := TEE_KINIBI
+
+ifeq ($(SAMPLETA_PLATFORM),TEE_GP)
+GP_ENTRYPOINTS := Y
+endif
 # Enable this to generate code that uses hardware floating points instructions and registers
 #HW_FLOATING_POINT := Y
 
@@ -32,7 +37,7 @@ endif
 #-------------------------------------------------------------------------------
 # Files and include paths - Add your files here
 #-------------------------------------------------------------------------------
-CC_OPTS += -DTEE_KINIBI
+CC_OPTS += -D$(SAMPLETA_PLATFORM)
 ### Add include path here
 INCLUDE_DIRS += ../../inc ../../inc/kinibi
 

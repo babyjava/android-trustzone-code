@@ -76,18 +76,21 @@ TEE_Result TA_EXPORT TA_OpenSessionEntryPoint(uint32_t paramTypes, TEE_Param par
 }
 TEE_Result TA_EXPORT TA_InvokeCommandEntryPoint(void* sessionContext, uint32_t commandID, uint32_t paramTypes, TEE_Param params[4]){
     (void)sessionContext;
-    (void)paramTypes;
-    struct fp_transfer_buf *in = (struct fp_transfer_buf *)params[0].memref.buffer;
-    struct fp_receive_buf *out  = (struct fp_receive_buf *)params[1].memref.buffer;
-    if((FP_TRANSFER_LEN != params[0].memref.size) || (FP_RECEIVE_LEN != params[1].memref.size)){
-        loge("err cmdlen = %d - %d, rsplen = %d - %d", params[0].memref.size, FP_TRANSFER_LEN, params[1].memref.size, FP_RECEIVE_LEN);
+    if((IN_BUF_LEN != params[0].memref.size) || (OUT_BUF_LEN != params[1].memref.size)){
+        loge("err cmdlen = %d - %d, rsplen = %d - %d", params[0].memref.size, IN_BUF_LEN, params[1].memref.size, OUT_BUF_LEN);
         return TEE_ERROR_GENERIC;
     }
-    if ((!in) || (!out) || (FP_GP_CMD != commandID)){
-        loge("%s %s", LOG_TAG, __func__);
+    if (paramTypes != TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT, TEE_PARAM_TYPE_MEMREF_OUTPUT, TEE_PARAM_TYPE_NONE, TEE_PARAM_TYPE_NONE)) {
+        loge("%s err paramTypes = %d", __func__, paramTypes);
         return TEE_ERROR_GENERIC;
     }
-    ta_router(in, out);
+    if (GP_CMD != commandID) {
+        loge("%s err commandID = %d", __func__, commandID);
+        return TEE_ERROR_GENERIC;
+    }
+    memcpy(g_in, params[0].memref.buffer, IN_BUF_LEN);
+    ta_router();
+    memcpy(params[1].memref.buffer, g_out, OUT_BUF_LEN);
     return TEE_SUCCESS;
 }
 void TA_EXPORT TA_CloseSessionEntryPoint(void *sessionContext){
