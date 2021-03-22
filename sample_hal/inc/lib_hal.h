@@ -21,7 +21,6 @@
 #include <time.h>
 #include "pthread.h"
 #include <errno.h>
-// #include <fcntl.h>
 #include <unistd.h>
 #include <inttypes.h>
 #include <sys/stat.h>
@@ -47,6 +46,13 @@ struct tee_client_device
     void (*tee_exit)(struct tee_client_device *);
     pthread_mutex_t mutex;
     void *handle;
+};
+
+struct tee_performance_record
+{
+    uint32_t cmd_run_times;
+    uint32_t cmd_cost_max_time;
+    uint32_t cmd_cost_total_time;
 };
 
 int gp_client_open(struct tee_client_device *dev);

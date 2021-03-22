@@ -16,8 +16,9 @@
 #include "lib_hal.h"
 
 static struct tee_client_device g_device;
-typedef int (*tee_open_t)(struct tee_client_device *);
+static struct tee_performance_record g_perf[TEE_CMD_END];
 
+typedef int (*tee_open_t)(struct tee_client_device *);
 static tee_open_t g_open[] = {
     qsee_client_open,
     isee_client_open,
@@ -31,7 +32,7 @@ static void random_data(struct tee_in_buf *in)
     struct timeval tv;
     int len = IN_BUF_LEN/sizeof(int);
     int *data = (int *)in;
-    while(len--){
+    while(--len){
         gettimeofday(&tv,NULL);
         srand(tv.tv_usec);
         data[len] = rand();
@@ -39,15 +40,40 @@ static void random_data(struct tee_in_buf *in)
     in->cmd = (in->cmd % TEE_CMD_END);
 }
 
+static void collect_data(uint32_t cmd, uint32_t t)
+{
+    g_perf[cmd].cmd_run_times++;
+    if(t > g_perf[cmd].cmd_cost_max_time) g_perf[cmd].cmd_cost_max_time = t;
+    g_perf[cmd].cmd_cost_total_time += t;
+}
+
+static void print_data(void)
+{
+    int i = 0;
+    for(i = 0;i < TEE_CMD_END; i++)
+    {
+        int avg_t = g_perf[i].cmd_cost_total_time/g_perf[i].cmd_run_times;
+        ALOGD("cmd = %d, run times = %d, max time = %d, avg time = %d\n", i, g_perf[i].cmd_run_times, g_perf[i].cmd_cost_max_time, avg_t);
+    }
+}
+
 static void random_stability_performance_test(int times)
 {
     struct tee_in_buf in;
     struct tee_out_buf out;
+    struct timeval tv1;
+    struct timeval tv2;
+    uint32_t time_cost;
     while(times--){
         random_data(&in);
+        gettimeofday(&tv1,NULL);
         g_device.tee_cmd(&g_device, &in, &out);
+        gettimeofday(&tv2,NULL);
         if_err(out.status != GENERIC_OK, break;, "%s %d", out.sys_err_line, out.sys_err);
+        time_cost = tv2.tv_usec - tv1.tv_usec;
+        collect_data(in.cmd, time_cost);
     }
+    print_data();
 }
 
 static void help(void)
