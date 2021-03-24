@@ -31,7 +31,7 @@ int (*g_open[TEE_COUNT])(struct tee_client_device *) = {
 static void init(int tee)
 {
     g_device = (struct tee_client_device *)malloc(sizeof(struct tee_client_device));
-    if_err(!g_device, return;, "%s", "malloc");
+    if_ab(!g_device, return);
     pthread_mutex_init(&g_device->mutex, NULL);
     g_open[tee](g_device);
     g_device->tee_init();
@@ -85,7 +85,7 @@ static void random_stability_performance_test(int times)
         g_device->tee_cmd(g_device);
         gettimeofday(&tv2,NULL);
         time_cost = tv2.tv_usec - tv1.tv_usec;
-        if_err(g_out->status != GENERIC_OK, break;, "%s %d", g_out->sys_err_line, g_out->sys_err);
+        if_abc(g_out->status != GENERIC_OK, break, "%s %d", g_out->sys_err_line, g_out->sys_err);
         collect_data(g_in->cmd, time_cost);
     }
     print_data();

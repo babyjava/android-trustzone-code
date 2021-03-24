@@ -35,11 +35,11 @@ static int kinibi_cmd(struct tee_client_device *dev)
     int status = 0;
     memcpy(g_mem, &dev->in, IN_BUF_LEN);
     status = PREFIX(mcNotify)(&g_session);
-    if_err(status != GENERIC_OK, goto end;, "%d %d", dev->in.cmd, status);
+    if_abc(status != GENERIC_OK, goto end, "%d %d", dev->in.cmd, status);
     status = PREFIX(mcWaitNotification)(&g_session, 1000);
-    if_err(status != GENERIC_OK,  , "%d %d", dev->in.cmd, status);
-end:
+    if_abc(status != GENERIC_OK, goto end, "%d %d", dev->in.cmd, status);
     memcpy(&dev->out, g_mem + IN_BUF_LEN, OUT_BUF_LEN);
+end:
     pthread_mutex_unlock(&dev->mutex);
     return status;
 }
@@ -59,26 +59,26 @@ static int kinibi_init(void)
     int len = 0;
     int status = PREFIX(mcOpenDevice)(MC_DEVICE_ID_DEFAULT);
     ALOGD("%s", __func__);
-    if_err(status != GENERIC_OK, return GENERIC_ERR;, "%d", status);
+    if_ab(status != GENERIC_OK, return GENERIC_ERR);
 
     fd = open(TA_PATH, O_RDONLY);
-    if_err(fd < GENERIC_OK, return GENERIC_ERR;, "%d", fd);
+    if_ab(fd < GENERIC_OK, return GENERIC_ERR);
 
     len = lseek(fd, 0, SEEK_END);
-    if_err(len < GENERIC_OK, return GENERIC_ERR;, "%d", len);
+    if_ab(len < GENERIC_OK, return GENERIC_ERR);
 
     g_ta = malloc(len);
-    if_err(!g_ta, return GENERIC_ERR;, "%s", "malloc");
+    if_ab(!g_ta, return GENERIC_ERR);
 
     status = read(fd, g_ta, len);
-    if_err(status != len, return GENERIC_ERR;, "%d", status);
+    if_ab(status != len, return GENERIC_ERR);
 
     g_mem = malloc(IN_BUF_LEN + OUT_BUF_LEN);
-    if_err(!g_mem, return GENERIC_ERR;, "%s", "malloc");
+    if_ab(!g_mem, return GENERIC_ERR);
 
     g_session.deviceId = MC_DEVICE_ID_DEFAULT;
     status = PREFIX(mcOpenTrustlet)(&g_session, MC_SPID_SYSTEM, g_ta, len, g_mem, (IN_BUF_LEN + OUT_BUF_LEN));
-    if_err(status != GENERIC_OK, return GENERIC_ERR;, "%s", "mcOpenTrustlet");
+    if_ab(status != GENERIC_OK, return GENERIC_ERR);
     return GENERIC_OK;
 }
 
@@ -86,7 +86,7 @@ int kinibi_client_open(struct tee_client_device *dev)
 {
     ALOGD("%s", __func__);
     dev->handle = dlopen(KINIBI_API_LIB, RTLD_LAZY);
-    if_err(!dev->handle, return GENERIC_ERR;, "%s", KINIBI_API_LIB);
+    if_abc(!dev->handle, return GENERIC_ERR, "%s", KINIBI_API_LIB);
     PREFIX(mcOpenDevice) = (mcResult_t(*)(uint32_t))DLSYM(mcOpenDevice);
     PREFIX(mcCloseDevice) = (mcResult_t(*)(uint32_t))DLSYM(mcCloseDevice);
     PREFIX(mcCloseSession) = (mcResult_t(*)(mcSessionHandle_t *))DLSYM(mcCloseSession);

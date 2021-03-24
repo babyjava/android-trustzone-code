@@ -31,7 +31,8 @@
 #include "platform_common.h"
 
 #define TEE_COUNT 5
-#define if_err(a, b, fmt, ...); if(a) { ALOGE("%s %d" fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__); b}
+#define if_ab(a, b); if(a) { ALOGE("%s %d\n", __FILE__, __LINE__); b;}
+#define if_abc(a, b, fmt, ...); if(a) { ALOGE("%s %d" fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__); b;}
 #define PREFIX(s) f_##s
 #define DLSYM(f) dlsym(dev->handle, #f); \
         if (dlerror() != NULL){ \

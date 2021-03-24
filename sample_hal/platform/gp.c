@@ -41,7 +41,7 @@ static int gp_cmd(struct tee_client_device *dev)
     pthread_mutex_lock(&dev->mutex);
     memcpy(g_in_mem.buffer, &dev->in, IN_BUF_LEN);
     int status = PREFIX(TEEC_InvokeCommand)(&g_session, GP_CMD, &g_operation, NULL);
-    if_err(status != GENERIC_OK, goto end;, "%d %d", dev->in.cmd, status);
+    if_abc(status != GENERIC_OK, goto end, "%d %d", dev->in.cmd, status);
     memcpy(&dev->out, g_out_mem.buffer, OUT_BUF_LEN);
 end:
     pthread_mutex_unlock(&dev->mutex);
@@ -77,13 +77,13 @@ static int gp_init(void)
     g_out_mem.size  = OUT_BUF_LEN;
     g_out_mem.flags = TEEC_MEM_OUTPUT;
     status = PREFIX(TEEC_InitializeContext)(host_name, &g_context);
-    if_err(status != GENERIC_OK, return GENERIC_ERR;, "%s", host_name);
+    if_ab(status != GENERIC_OK, return GENERIC_ERR);
     status = PREFIX(TEEC_OpenSession)(&g_context, &g_session, &uuid, TEEC_LOGIN_PUBLIC, NULL, NULL, NULL);
-    if_err(status != GENERIC_OK, return GENERIC_ERR;, "%s", "OpenSession");
+    if_ab(status != GENERIC_OK, return GENERIC_ERR);
     status = PREFIX(TEEC_AllocateSharedMemory)(&g_context, &g_in_mem);
-    if_err(status != GENERIC_OK, return GENERIC_ERR;, "%s", "Memory in");
+    if_ab(status != GENERIC_OK, return GENERIC_ERR);
     status = PREFIX(TEEC_AllocateSharedMemory)(&g_context, &g_out_mem);
-    if_err(status != GENERIC_OK, return GENERIC_ERR;, "%s", "Memory out");
+    if_ab(status != GENERIC_OK, return GENERIC_ERR);
     return GENERIC_OK;
 }
 
@@ -91,7 +91,7 @@ int gp_client_open(struct tee_client_device *dev)
 {
     ALOGD("%s", __func__);
     dev->handle = dlopen(GP_API_LIB, RTLD_LAZY);
-    if_err(!dev->handle, return GENERIC_ERR;, "%s", GP_API_LIB);
+    if_abc(!dev->handle, return GENERIC_ERR, "%s", GP_API_LIB);
     PREFIX(TEEC_InitializeContext) = (TEEC_Result(*)(const char *, TEEC_Context *))DLSYM(TEEC_InitializeContext);
     PREFIX(TEEC_FinalizeContext) = (void(*)(TEEC_Context *))DLSYM(TEEC_FinalizeContext);
     PREFIX(TEEC_OpenSession) = (TEEC_Result(*)(TEEC_Context *, TEEC_Session *, const TEEC_UUID *, uint32_t ,

@@ -16,7 +16,7 @@
 #include "platform_hal.h"
 
 static int g_handle = -1;
-static uint8_t* g_mem;
+static void* g_mem;
 extern struct hal_device g_device;
 #define ISEE_DEVICE "/dev/teei_fp"
 #define ISEE_MAGIC_NO _IO('T', 0x2)
@@ -26,8 +26,8 @@ static int isee_cmd(struct tee_client_device *dev){
     int status = 0;
     memcpy(g_mem, &dev->in, IN_BUF_LEN);
     status = ioctl(g_handle, ISEE_MAGIC_NO, g_mem);
-    if_err(status != GENERIC_OK, goto end;, "%d %d", dev->in.cmd, status);
-    memcpy(&dev->out, g_mem + IN_BUF_LEN, OUT_BUF_LEN);
+    if_abc(status != GENERIC_OK, goto end, "%d %d", dev->in.cmd, status);
+    memcpy(&dev->out, (uint8_t *)g_mem + IN_BUF_LEN, OUT_BUF_LEN);
 end:
     pthread_mutex_unlock(&dev->mutex);
     return status;
@@ -45,10 +45,10 @@ static int isee_init(void)
 {
     ALOGD("%s", __func__);
     g_handle = open(ISEE_DEVICE, O_RDWR);
-    if_err(g_handle < GENERIC_OK, return GENERIC_ERR;, "%s", "open");
+    if_ab(g_handle < GENERIC_OK, return GENERIC_ERR);
 
     g_mem = malloc(IN_BUF_LEN + OUT_BUF_LEN);
-    if_err(!g_mem, return GENERIC_ERR;, "%s", "malloc");
+    if_ab(!g_mem, return GENERIC_ERR);
     return GENERIC_OK;
 }
 
