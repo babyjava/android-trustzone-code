@@ -31,7 +31,7 @@ static int qsee_cmd(struct tee_client_device *dev)
     pthread_mutex_lock(&dev->mutex);
     memcpy(g_handle->ion_sbuffer, &dev->in, IN_BUF_LEN);
     int status = PREFIX(QSEECom_send_cmd)(g_handle, g_handle->ion_sbuffer, QSEE_IN_LEN, (g_handle->ion_sbuffer + QSEE_IN_LEN), QSEE_OUT_LEN);
-    if_abc(status != GENERIC_OK, goto end, "%d %d", dev->in.cmd, status);
+    if_abc(status, goto end, "%d %d", dev->in.cmd, status);
     memcpy(&dev->out, g_handle->ion_sbuffer + QSEE_IN_LEN, OUT_BUF_LEN);
 end:
     pthread_mutex_unlock(&dev->mutex);
@@ -50,8 +50,8 @@ static int qsee_init(void)
 {
     int status = PREFIX(QSEECom_start_app)(&g_handle, QSEE_TA_PATH, QSEE_TA_NAME, (QSEE_IN_LEN + QSEE_OUT_LEN));
     ALOGD("%s", __func__);
-    if_abc(status != GENERIC_OK,  , "%s %s", QSEE_TA_PATH, QSEE_TA_NAME);
-    return status;
+    if_abc(status, return GENERIC_ERR, "%s %s", QSEE_TA_PATH, QSEE_TA_NAME);
+    return GENERIC_OK;
 }
 
 int qsee_client_open(struct tee_client_device *dev)

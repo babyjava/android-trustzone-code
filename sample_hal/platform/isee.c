@@ -26,7 +26,7 @@ static int isee_cmd(struct tee_client_device *dev){
     int status = 0;
     memcpy(g_mem, &dev->in, IN_BUF_LEN);
     status = ioctl(g_handle, ISEE_MAGIC_NO, g_mem);
-    if_abc(status != GENERIC_OK, goto end, "%d %d", dev->in.cmd, status);
+    if_abc(status, goto end, "%d %d", dev->in.cmd, status);
     memcpy(&dev->out, (uint8_t *)g_mem + IN_BUF_LEN, OUT_BUF_LEN);
 end:
     pthread_mutex_unlock(&dev->mutex);

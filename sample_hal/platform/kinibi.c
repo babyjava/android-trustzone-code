@@ -18,7 +18,7 @@
 
 #define KINIBI_API_LIB "libMcTrusty.so"
 #define TA_PATH "/system/app/mcRegistry/88866600000000000000000000000000.tlbin"
-static uint8_t *g_mem;
+static void *g_mem;
 static void *g_ta;
 static mcSessionHandle_t g_session;
 
@@ -35,10 +35,10 @@ static int kinibi_cmd(struct tee_client_device *dev)
     int status = 0;
     memcpy(g_mem, &dev->in, IN_BUF_LEN);
     status = PREFIX(mcNotify)(&g_session);
-    if_abc(status != GENERIC_OK, goto end, "%d %d", dev->in.cmd, status);
+    if_abc(status, goto end, "%d %d", dev->in.cmd, status);
     status = PREFIX(mcWaitNotification)(&g_session, 1000);
-    if_abc(status != GENERIC_OK, goto end, "%d %d", dev->in.cmd, status);
-    memcpy(&dev->out, g_mem + IN_BUF_LEN, OUT_BUF_LEN);
+    if_abc(status, goto end, "%d %d", dev->in.cmd, status);
+    memcpy(&dev->out, (uint8_t *)g_mem + IN_BUF_LEN, OUT_BUF_LEN);
 end:
     pthread_mutex_unlock(&dev->mutex);
     return status;
@@ -59,7 +59,7 @@ static int kinibi_init(void)
     int len = 0;
     int status = PREFIX(mcOpenDevice)(MC_DEVICE_ID_DEFAULT);
     ALOGD("%s", __func__);
-    if_ab(status != GENERIC_OK, return GENERIC_ERR);
+    if_ab(status, return GENERIC_ERR);
 
     fd = open(TA_PATH, O_RDONLY);
     if_ab(fd < GENERIC_OK, return GENERIC_ERR);

@@ -77,13 +77,13 @@ static int gp_init(void)
     g_out_mem.size  = OUT_BUF_LEN;
     g_out_mem.flags = TEEC_MEM_OUTPUT;
     status = PREFIX(TEEC_InitializeContext)(host_name, &g_context);
-    if_ab(status != GENERIC_OK, return GENERIC_ERR);
+    if_ab(status, return GENERIC_ERR);
     status = PREFIX(TEEC_OpenSession)(&g_context, &g_session, &uuid, TEEC_LOGIN_PUBLIC, NULL, NULL, NULL);
-    if_ab(status != GENERIC_OK, return GENERIC_ERR);
+    if_ab(status, return GENERIC_ERR);
     status = PREFIX(TEEC_AllocateSharedMemory)(&g_context, &g_in_mem);
-    if_ab(status != GENERIC_OK, return GENERIC_ERR);
+    if_ab(status, return GENERIC_ERR);
     status = PREFIX(TEEC_AllocateSharedMemory)(&g_context, &g_out_mem);
-    if_ab(status != GENERIC_OK, return GENERIC_ERR);
+    if_ab(status, return GENERIC_ERR);
     return GENERIC_OK;
 }
 
