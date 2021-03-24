@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 */
-#include "lib_hal.h"
+#include "platform_hal.h"
 #include "kinibi/MobiCoreDriverApi.h"
 
 #define KINIBI_API_LIB "libMcTrusty.so"
@@ -29,28 +29,29 @@ static mcResult_t (*PREFIX(mcNotify))(mcSessionHandle_t *);
 static mcResult_t (*PREFIX(mcWaitNotification))(mcSessionHandle_t *, int32_t);
 static mcResult_t (*PREFIX(mcOpenTrustlet))(mcSessionHandle_t *, mcSpid_t, uint8_t *, uint32_t, uint8_t *, uint32_t);
 
-static int kinibi_cmd(struct tee_client_device *dev, struct tee_in_buf *in, struct tee_out_buf *out)
+static int kinibi_cmd(struct tee_client_device *dev)
 {
     pthread_mutex_lock(&dev->mutex);
     int status = 0;
-    memcpy(g_mem, in, IN_BUF_LEN);
+    memcpy(g_mem, &dev->in, IN_BUF_LEN);
     status = PREFIX(mcNotify)(&g_session);
-    if_err(status != GENERIC_OK, goto end;, "%d %d", in->cmd, status);
+    if_err(status != GENERIC_OK, goto end;, "%d %d", dev->in.cmd, status);
     status = PREFIX(mcWaitNotification)(&g_session, 1000);
-    if_err(status != GENERIC_OK,  , "%d %d", in->cmd, status);
+    if_err(status != GENERIC_OK,  , "%d %d", dev->in.cmd, status);
 end:
-    memcpy(out, g_mem + IN_BUF_LEN, OUT_BUF_LEN);
+    memcpy(&dev->out, g_mem + IN_BUF_LEN, OUT_BUF_LEN);
     pthread_mutex_unlock(&dev->mutex);
     return status;
 }
 
-static void kinibi_exit(struct tee_client_device *dev)
+static int kinibi_exit(struct tee_client_device *dev)
 {
     ALOGE("%s", __func__);
+    free(g_ta);
     PREFIX(mcCloseSession)(&g_session);
     PREFIX(mcCloseDevice)(MC_DEVICE_ID_DEFAULT);
-    if(g_ta) free(g_ta);
-    if(dev->handle) dlclose(dev->handle);
+    dlclose(dev->handle);
+    return GENERIC_OK;
 }
 
 static int kinibi_init(void)

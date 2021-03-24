@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 */
-#include "lib_hal.h"
+#include "platform_hal.h"
 #include "qsee/QSEEComAPI.h"
 
 #define QSEE_IN_LEN QSEECOM_ALIGN(IN_BUF_LEN)
@@ -26,19 +26,20 @@ static int (*PREFIX(QSEECom_start_app))(struct QSEECom_handle **, const char *, 
 static int (*PREFIX(QSEECom_shutdown_app))(struct QSEECom_handle **);
 static int (*PREFIX(QSEECom_send_cmd))(struct QSEECom_handle *, void *, uint32_t, void *, uint32_t);
 
-static int qsee_cmd(struct tee_client_device *dev, struct tee_in_buf *in, struct tee_out_buf *out)
+static int qsee_cmd(struct tee_client_device *dev)
 {
-    int status = PREFIX(QSEECom_send_cmd)(g_handle, in, QSEE_IN_LEN, out, QSEE_OUT_LEN);
-    if_err(status != GENERIC_OK,  , "%d %d", in->cmd, status);
+    int status = PREFIX(QSEECom_send_cmd)(g_handle, &dev->in, QSEE_IN_LEN, &dev->out, QSEE_OUT_LEN);
+    if_err(status != GENERIC_OK,  , "%d %d", dev->in.cmd, status);
     pthread_mutex_unlock(&dev->mutex);
     return status;
 }
 
-static void qsee_exit(struct tee_client_device *dev)
+static int qsee_exit(struct tee_client_device *dev)
 {
     ALOGD("%s", __func__);
-    if(g_handle) PREFIX(QSEECom_shutdown_app)(&g_handle);
-    if(dev->handle) dlclose(dev->handle);
+    PREFIX(QSEECom_shutdown_app)(&g_handle);
+    dlclose(dev->handle);
+    return GENERIC_OK;
 }
 
 static int qsee_init(void)

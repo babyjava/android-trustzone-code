@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 */
-#include "lib_hal.h"
+#include "platform_hal.h"
 #include "trusty/tipc.h"
 
 static int g_handle = -1;
@@ -23,24 +23,25 @@ static int g_handle = -1;
 static int (*PREFIX(tipc_connect))(const char *dev_name, const char *srv_name);
 static int (*PREFIX(tipc_close))(int fd);
 
-static int trusty_cmd(struct tee_client_device *dev, struct tee_in_buf *in, struct tee_out_buf *out)
+static int trusty_cmd(struct tee_client_device *dev)
 {
     pthread_mutex_lock(&dev->mutex);
     int status = GENERIC_OK;
-    ssize_t len = write(g_handle, in, IN_BUF_LEN);
-    if_err(len != IN_BUF_LEN, status = GENERIC_ERR; goto end;, "%d %zd", in->cmd, len);
-    len = read(g_handle, out, OUT_BUF_LEN);
-    if_err(len != IN_BUF_LEN, status = GENERIC_ERR;, "%d %zd", in->cmd, len);
+    ssize_t len = write(g_handle, &dev->in, IN_BUF_LEN);
+    if_err(len != IN_BUF_LEN, status = GENERIC_ERR; goto end;, "%d %zd", dev->in.cmd, len);
+    len = read(g_handle, &dev->out, OUT_BUF_LEN);
+    if_err(len != IN_BUF_LEN, status = GENERIC_ERR;, "%d %zd", dev->in.cmd, len);
 end:
     pthread_mutex_unlock(&dev->mutex);
     return status;
 }
 
-static void trusty_exit(struct tee_client_device *dev)
+static int trusty_exit(struct tee_client_device *dev)
 {
     ALOGD("%s", __func__);
-    if(g_handle > 0) PREFIX(tipc_close)(g_handle);
-    if(dev->handle) dlclose(dev->handle);
+    PREFIX(tipc_close)(g_handle);
+    dlclose(dev->handle);
+    return GENERIC_OK;
 }
 
 static int trusty_init(void)

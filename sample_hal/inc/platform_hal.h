@@ -30,7 +30,7 @@
 #include <dlfcn.h>
 #include "platform_common.h"
 
-#define LIB_VERSION "version:1.0.0.0"
+#define TEE_COUNT 5
 #define if_err(a, b, fmt, ...); if(a) { ALOGE("%s %d" fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__); b}
 #define PREFIX(s) f_##s
 #define DLSYM(f) dlsym(dev->handle, #f); \
@@ -39,20 +39,23 @@
             return GENERIC_ERR; \
         }
 
-struct tee_client_device
-{
-    int (*tee_init)(void);
-    int (*tee_cmd)(struct tee_client_device *, struct tee_in_buf *, struct tee_out_buf *);
-    void (*tee_exit)(struct tee_client_device *);
-    pthread_mutex_t mutex;
-    void *handle;
-};
-
 struct tee_performance_record
 {
     uint32_t cmd_run_times;
     uint32_t cmd_cost_max_time;
     uint64_t cmd_cost_total_time;
+};
+
+struct tee_client_device
+{
+    int (*tee_init)(void);
+    int (*tee_cmd)(struct tee_client_device *);
+    int (*tee_exit)(struct tee_client_device *);
+    struct tee_in_buf in;
+    struct tee_out_buf out;
+    struct tee_performance_record perf[TEE_CMD_RELEASE];
+    pthread_mutex_t mutex;
+    void *handle;
 };
 
 int gp_client_open(struct tee_client_device *dev);

@@ -13,13 +13,14 @@
 # limitations under the License.
 #
 */
-#include "lib_hal.h"
+#include "platform_hal.h"
 
-static struct tee_client_device g_device;
-static struct tee_performance_record g_perf[TEE_CMD_END];
+struct tee_client_device *g_device;
+struct tee_in_buf *g_in;
+struct tee_out_buf *g_out;
+struct tee_performance_record *g_perf;
 
-typedef int (*tee_open_t)(struct tee_client_device *);
-static tee_open_t g_open[] = {
+int (*g_open[TEE_COUNT])(struct tee_client_device *) = {
     qsee_client_open,
     isee_client_open,
     kinibi_client_open,
@@ -27,17 +28,32 @@ static tee_open_t g_open[] = {
     gp_client_open,
 };
 
-static void random_data(struct tee_in_buf *in)
+static void init(int tee)
 {
+    g_device = (struct tee_client_device *)malloc(sizeof(struct tee_client_device));
+    if_err(!g_device, return;, "%s", "malloc");
+    pthread_mutex_init(&g_device->mutex, NULL);
+    g_open[tee](g_device);
+    g_device->tee_init();
+}
+
+static void random_data(void)
+{
+    int len = 0;
     struct timeval tv;
-    int len = IN_BUF_LEN/sizeof(int);
-    int *data = (int *)in;
-    while(--len){
+    int *data = (int *)g_in->buf;
+    gettimeofday(&tv,NULL);
+    srand(tv.tv_usec);
+    g_in->spi_num = 0;
+    g_in->i2c_num = 0x2e;
+    g_in->cmd = (rand() % TEE_CMD_RELEASE);
+    g_in->buf_len = (rand() % BUF_LEN);
+    len = g_in->buf_len;
+    while(len){
         gettimeofday(&tv,NULL);
         srand(tv.tv_usec);
-        data[len] = rand();
+        data[len--] = rand();
     }
-    in->cmd = (in->cmd % TEE_CMD_END);
 }
 
 static void collect_data(uint32_t cmd, uint32_t t)
@@ -60,19 +76,17 @@ static void print_data(void)
 
 static void random_stability_performance_test(int times)
 {
-    struct tee_in_buf in;
-    struct tee_out_buf out;
     struct timeval tv1;
     struct timeval tv2;
     uint32_t time_cost;
     while(times--){
-        random_data(&in);
+        random_data();
         gettimeofday(&tv1,NULL);
-        g_device.tee_cmd(&g_device, &in, &out);
+        g_device->tee_cmd(g_device);
         gettimeofday(&tv2,NULL);
         time_cost = tv2.tv_usec - tv1.tv_usec;
-        if_err(out.status != GENERIC_OK, break;, "%s %d", out.sys_err_line, out.sys_err);
-        collect_data(in.cmd, time_cost);
+        if_err(g_out->status != GENERIC_OK, break;, "%s %d", g_out->sys_err_line, g_out->sys_err);
+        collect_data(g_in->cmd, time_cost);
     }
     print_data();
 }
@@ -86,22 +100,27 @@ static void help(void)
         "Test_times: > 0\n");
 }
 
+static void release(void)
+{
+    g_in->cmd = TEE_CMD_RELEASE;
+    g_device->tee_cmd(g_device);
+    g_device->tee_exit(g_device);
+    pthread_mutex_destroy(&g_device->mutex);
+}
+
 int main(int argc, char **argv)
 {
     int tee, times;
     if(argc < 2) goto end;
     tee = atoi(argv[1]);
     times = atoi(argv[2]);
-    if(tee < 0 || tee > 5 || times < 1) goto end;
+    if(tee < 0 || tee >= TEE_COUNT || times < 1) goto end;
 
-    pthread_mutex_init(&g_device.mutex, NULL);
-    g_open[tee](&g_device);
-    g_device.tee_init();
+    init(tee);
 
     random_stability_performance_test(times);
 
-    g_device.tee_exit(&g_device);
-    pthread_mutex_destroy(&g_device.mutex);
+    release();
     return 0;
 end:
     help();

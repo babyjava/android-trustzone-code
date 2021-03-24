@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 */
-#include "lib_hal.h"
+#include "platform_hal.h"
 
 static int g_handle = -1;
 static uint8_t* g_mem;
@@ -21,23 +21,24 @@ extern struct hal_device g_device;
 #define ISEE_DEVICE "/dev/teei_fp"
 #define ISEE_MAGIC_NO _IO('T', 0x2)
 
-static int isee_cmd(struct tee_client_device *dev, struct tee_in_buf *in, struct tee_out_buf *out){
+static int isee_cmd(struct tee_client_device *dev){
     pthread_mutex_lock(&dev->mutex);
     int status = 0;
-    memcpy(g_mem, in, IN_BUF_LEN);
+    memcpy(g_mem, &dev->in, IN_BUF_LEN);
     status = ioctl(g_handle, ISEE_MAGIC_NO, g_mem);
-    if_err(status != GENERIC_OK, goto end;, "%d %d", in->cmd, status);
-    memcpy(out, g_mem + IN_BUF_LEN, OUT_BUF_LEN);
+    if_err(status != GENERIC_OK, goto end;, "%d %d", dev->in.cmd, status);
+    memcpy(&dev->out, g_mem + IN_BUF_LEN, OUT_BUF_LEN);
 end:
     pthread_mutex_unlock(&dev->mutex);
     return status;
 }
 
-static void isee_exit(struct tee_client_device *dev){
+static int isee_exit(struct tee_client_device *dev){
     ALOGD("%s", __func__);
-    if(g_mem) free(g_mem);
-    if(g_handle > 0) close(g_handle);
-    if(dev->handle) dlclose(dev->handle);
+    free(g_mem);
+    close(g_handle);
+    dlclose(dev->handle);
+    return GENERIC_OK;
 }
 
 static int isee_init(void)
