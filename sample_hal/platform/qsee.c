@@ -29,21 +29,19 @@ static int (*PREFIX(QSEECom_send_cmd))(struct QSEECom_handle *, void *, uint32_t
 static int qsee_cmd(struct tee_client_device *dev)
 {
     pthread_mutex_lock(&dev->mutex);
-    memcpy(g_handle->ion_sbuffer, &dev->in, IN_BUF_LEN);
-    int status = PREFIX(QSEECom_send_cmd)(g_handle, g_handle->ion_sbuffer, QSEE_IN_LEN, (g_handle->ion_sbuffer + QSEE_IN_LEN), QSEE_OUT_LEN);
+    memcpy(g_handle, &dev->in, IN_BUF_LEN);
+    int status = PREFIX(QSEECom_send_cmd)(g_handle, g_handle, QSEE_IN_LEN, (g_handle + QSEE_IN_LEN), QSEE_OUT_LEN);
     if_abc(status, goto end, "%d %d", dev->in.cmd, status);
-    memcpy(&dev->out, g_handle->ion_sbuffer + QSEE_IN_LEN, OUT_BUF_LEN);
+    memcpy(&dev->out, g_handle + QSEE_IN_LEN, OUT_BUF_LEN);
 end:
     pthread_mutex_unlock(&dev->mutex);
     return status;
 }
 
-static int qsee_exit(struct tee_client_device *dev)
+static void qsee_exit(void)
 {
     ALOGD("%s", __func__);
     PREFIX(QSEECom_shutdown_app)(&g_handle);
-    dlclose(dev->handle);
-    return GENERIC_OK;
 }
 
 static int qsee_init(void)

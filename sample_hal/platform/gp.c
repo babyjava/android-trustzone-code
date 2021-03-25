@@ -48,15 +48,13 @@ end:
     return status;
 }
 
-static int gp_exit(struct tee_client_device *dev)
+static void gp_exit(void)
 {
     ALOGD("%s", __func__);
     PREFIX(TEEC_ReleaseSharedMemory)(&g_in_mem);
     PREFIX(TEEC_ReleaseSharedMemory)(&g_out_mem);
     PREFIX(TEEC_CloseSession)(&g_session);
     PREFIX(TEEC_FinalizeContext)(&g_context);
-    dlclose(dev->handle);
-    return GENERIC_OK;
 }
 
 static int gp_init(void)

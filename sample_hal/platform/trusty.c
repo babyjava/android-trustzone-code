@@ -16,8 +16,8 @@
 #include "platform_hal.h"
 #include "trusty/tipc.h"
 
-static int g_handle = -1;
 static void* g_mem;
+static int g_handle = -1;
 #define TRUSTY_DEVICE_NAME "/dev/trusty-ipc-dev0"
 #define TADEMO_PORT "com.android.sampleta.demo"
 #define TRUSTY_API_LIB "libtrusty.so"
@@ -39,12 +39,10 @@ end:
     return status;
 }
 
-static int trusty_exit(struct tee_client_device *dev)
+static void trusty_exit(void)
 {
     ALOGD("%s", __func__);
     PREFIX(tipc_close)(g_handle);
-    dlclose(dev->handle);
-    return GENERIC_OK;
 }
 
 static int trusty_init(void)

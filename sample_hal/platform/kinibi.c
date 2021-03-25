@@ -19,9 +19,7 @@
 #define KINIBI_API_LIB "libMcTrusty.so"
 #define TA_PATH "/system/app/mcRegistry/88866600000000000000000000000000.tlbin"
 static void *g_mem;
-static void *g_ta;
 static mcSessionHandle_t g_session;
-
 static mcResult_t (*PREFIX(mcOpenDevice))(uint32_t);
 static mcResult_t (*PREFIX(mcCloseDevice))(uint32_t);
 static mcResult_t (*PREFIX(mcCloseSession))(mcSessionHandle_t *);
@@ -44,19 +42,18 @@ end:
     return status;
 }
 
-static int kinibi_exit(struct tee_client_device *dev)
+static void kinibi_exit(void)
 {
     ALOGE("%s", __func__);
-    free(g_ta);
+    free(g_mem);
     PREFIX(mcCloseSession)(&g_session);
     PREFIX(mcCloseDevice)(MC_DEVICE_ID_DEFAULT);
-    dlclose(dev->handle);
-    return GENERIC_OK;
 }
 
 static int kinibi_init(void)
 {   int fd = 0;
     int len = 0;
+    void *ta_buf;
     int status = PREFIX(mcOpenDevice)(MC_DEVICE_ID_DEFAULT);
     ALOGD("%s", __func__);
     if_ab(status, return GENERIC_ERR);
@@ -67,18 +64,17 @@ static int kinibi_init(void)
     len = lseek(fd, 0, SEEK_END);
     if_ab(len < GENERIC_OK, return GENERIC_ERR);
 
-    g_ta = malloc(len);
-    if_ab(!g_ta, return GENERIC_ERR);
+    ta_buf = malloc(len);
+    g_mem = malloc(IN_BUF_LEN + OUT_BUF_LEN);
+    if_ab(!ta_buf || !g_mem, return GENERIC_ERR);
 
-    status = read(fd, g_ta, len);
+    status = read(fd, ta_buf, len);
     if_ab(status != len, return GENERIC_ERR);
 
-    g_mem = malloc(IN_BUF_LEN + OUT_BUF_LEN);
-    if_ab(!g_mem, return GENERIC_ERR);
-
     g_session.deviceId = MC_DEVICE_ID_DEFAULT;
-    status = PREFIX(mcOpenTrustlet)(&g_session, MC_SPID_SYSTEM, g_ta, len, g_mem, (IN_BUF_LEN + OUT_BUF_LEN));
+    status = PREFIX(mcOpenTrustlet)(&g_session, MC_SPID_SYSTEM, ta_buf, len, g_mem, (IN_BUF_LEN + OUT_BUF_LEN));
     if_ab(status != GENERIC_OK, return GENERIC_ERR);
+    free(ta_buf);
     return GENERIC_OK;
 }
 

@@ -33,12 +33,10 @@ end:
     return status;
 }
 
-static int isee_exit(struct tee_client_device *dev){
+static void isee_exit(void){
     ALOGD("%s", __func__);
     free(g_mem);
     close(g_handle);
-    dlclose(dev->handle);
-    return GENERIC_OK;
 }
 
 static int isee_init(void)

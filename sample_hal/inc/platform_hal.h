@@ -40,7 +40,7 @@
             return GENERIC_ERR; \
         }
 
-struct tee_performance_record
+struct tee_performance
 {
     uint32_t cmd_run_times;
     uint32_t cmd_cost_max_time;
@@ -51,10 +51,10 @@ struct tee_client_device
 {
     int (*tee_init)(void);
     int (*tee_cmd)(struct tee_client_device *);
-    int (*tee_exit)(struct tee_client_device *);
+    void (*tee_exit)(void);
     struct tee_in_buf in;
     struct tee_out_buf out;
-    struct tee_performance_record perf[TEE_CMD_RELEASE];
+    struct tee_performance perf[TEE_CMD_RELEASE];
     pthread_mutex_t mutex;
     void *handle;
 };
