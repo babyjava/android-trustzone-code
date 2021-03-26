@@ -50,10 +50,9 @@ struct tee_performance
 struct tee_client_device
 {
     int (*tee_init)(void);
-    int (*tee_cmd)(struct tee_client_device *);
+    int (*tee_cmd)(struct tee_client_device *, struct tee_in_buf *in, struct tee_out_buf *out);
     void (*tee_exit)(void);
-    struct tee_in_buf in;
-    struct tee_out_buf out;
+    uint8_t buf[IN_BUF_LEN + OUT_BUF_LEN];
     struct tee_performance perf[TEE_CMD_RELEASE];
     pthread_mutex_t mutex;
     void *handle;

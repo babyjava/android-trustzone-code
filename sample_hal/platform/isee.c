@@ -16,26 +16,32 @@
 #include "platform_hal.h"
 
 static int g_handle = -1;
-static void* g_mem;
 extern struct hal_device g_device;
 #define ISEE_DEVICE "/dev/teei_fp"
 #define ISEE_MAGIC_NO _IO('T', 0x2)
 
-static int isee_cmd(struct tee_client_device *dev){
+struct ut_pf_fp_cmd_header {
+    uint32_t reserved_header_1;
+    uint32_t reserved_header_2;
+    uint32_t reserved_header_3;
+    uint32_t data_length;
+    void *buf;
+};
+
+static struct ut_pf_fp_cmd_header g_cmd;
+static int isee_cmd(struct tee_client_device *dev, struct tee_in_buf *in, struct tee_out_buf *out){
     pthread_mutex_lock(&dev->mutex);
     int status = 0;
-    memcpy(g_mem, &dev->in, IN_BUF_LEN);
-    status = ioctl(g_handle, ISEE_MAGIC_NO, g_mem);
-    if_abc(status, goto end, "%d %d", dev->in.cmd, status);
-    memcpy(&dev->out, (uint8_t *)g_mem + IN_BUF_LEN, OUT_BUF_LEN);
-end:
+    g_cmd.buf = in;
+    g_cmd.data_length = IN_BUF_LEN + OUT_BUF_LEN;
+    status = ioctl(g_handle, ISEE_MAGIC_NO, &g_cmd);
+    if_abc(status, (void)out, "%d %d", in->cmd, status);
     pthread_mutex_unlock(&dev->mutex);
     return status;
 }
 
 static void isee_exit(void){
     ALOGD("%s", __func__);
-    free(g_mem);
     close(g_handle);
 }
 
@@ -44,9 +50,6 @@ static int isee_init(void)
     ALOGD("%s", __func__);
     g_handle = open(ISEE_DEVICE, O_RDWR);
     if_ab(g_handle < GENERIC_OK, return GENERIC_ERR);
-
-    g_mem = malloc(IN_BUF_LEN + OUT_BUF_LEN);
-    if_ab(!g_mem, return GENERIC_ERR);
     return GENERIC_OK;
 }
 

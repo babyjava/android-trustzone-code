@@ -26,14 +26,11 @@ static int (*PREFIX(QSEECom_start_app))(struct QSEECom_handle **, const char *, 
 static int (*PREFIX(QSEECom_shutdown_app))(struct QSEECom_handle **);
 static int (*PREFIX(QSEECom_send_cmd))(struct QSEECom_handle *, void *, uint32_t, void *, uint32_t);
 
-static int qsee_cmd(struct tee_client_device *dev)
+static int qsee_cmd(struct tee_client_device *dev, struct tee_in_buf *in, struct tee_out_buf *out)
 {
     pthread_mutex_lock(&dev->mutex);
-    memcpy(g_handle, &dev->in, IN_BUF_LEN);
-    int status = PREFIX(QSEECom_send_cmd)(g_handle, g_handle, QSEE_IN_LEN, (g_handle + QSEE_IN_LEN), QSEE_OUT_LEN);
-    if_abc(status, goto end, "%d %d", dev->in.cmd, status);
-    memcpy(&dev->out, g_handle + QSEE_IN_LEN, OUT_BUF_LEN);
-end:
+    int status = PREFIX(QSEECom_send_cmd)(g_handle, in, QSEE_IN_LEN, out, QSEE_OUT_LEN);
+    if_abc(status,  , "%d %d", in->cmd, status);
     pthread_mutex_unlock(&dev->mutex);
     return status;
 }

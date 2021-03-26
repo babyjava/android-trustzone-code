@@ -36,13 +36,13 @@ static void (*PREFIX(TEEC_CloseSession))(TEEC_Session *session);
 static void (*PREFIX(TEEC_FinalizeContext))(TEEC_Context *context);
 static void (*PREFIX(TEEC_ReleaseSharedMemory))(TEEC_SharedMemory *sharedMemory);
 
-static int gp_cmd(struct tee_client_device *dev)
+static int gp_cmd(struct tee_client_device *dev,  struct tee_in_buf *in, struct tee_out_buf *out)
 {
     pthread_mutex_lock(&dev->mutex);
-    memcpy(g_in_mem.buffer, &dev->in, IN_BUF_LEN);
+    memcpy(g_in_mem.buffer, in, IN_BUF_LEN);
     int status = PREFIX(TEEC_InvokeCommand)(&g_session, GP_CMD, &g_operation, NULL);
-    if_abc(status != GENERIC_OK, goto end, "%d %d", dev->in.cmd, status);
-    memcpy(&dev->out, g_out_mem.buffer, OUT_BUF_LEN);
+    if_abc(status != GENERIC_OK, goto end, "%d %d", in->cmd, status);
+    memcpy(out, g_out_mem.buffer, OUT_BUF_LEN);
 end:
     pthread_mutex_unlock(&dev->mutex);
     return status;

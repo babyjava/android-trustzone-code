@@ -16,7 +16,6 @@
 #include "platform_hal.h"
 #include "trusty/tipc.h"
 
-static void* g_mem;
 static int g_handle = -1;
 #define TRUSTY_DEVICE_NAME "/dev/trusty-ipc-dev0"
 #define TADEMO_PORT "com.android.sampleta.demo"
@@ -24,16 +23,14 @@ static int g_handle = -1;
 static int (*PREFIX(tipc_connect))(const char *dev_name, const char *srv_name);
 static int (*PREFIX(tipc_close))(int fd);
 
-static int trusty_cmd(struct tee_client_device *dev)
+static int trusty_cmd(struct tee_client_device *dev, struct tee_in_buf *in, struct tee_out_buf *out)
 {
     pthread_mutex_lock(&dev->mutex);
     int status = GENERIC_OK;
-    memcpy(g_mem, &dev->in, IN_BUF_LEN);
-    ssize_t len = write(g_handle, g_mem, IN_BUF_LEN);
-    if_abc(len != IN_BUF_LEN, status = GENERIC_ERR; goto end, "%d %zd", dev->in.cmd, len);
-    len = read(g_handle, &dev->out, OUT_BUF_LEN);
-    if_abc(len != OUT_BUF_LEN, status = GENERIC_ERR; goto end, "%d %zd", dev->in.cmd, len);
-    memcpy(&dev->out, (uint8_t *)g_mem + IN_BUF_LEN, OUT_BUF_LEN);
+    ssize_t len = write(g_handle, in, IN_BUF_LEN);
+    if_abc(len != IN_BUF_LEN, status = GENERIC_ERR; goto end, "%d %zd", in->cmd, len);
+    len = read(g_handle, out, OUT_BUF_LEN);
+    if_abc(len != OUT_BUF_LEN, status = GENERIC_ERR; goto end, "%d %zd", in->cmd, len);
 end:
     pthread_mutex_unlock(&dev->mutex);
     return status;
@@ -50,8 +47,6 @@ static int trusty_init(void)
     ALOGD("%s", __func__);
     g_handle = PREFIX(tipc_connect)(TRUSTY_DEVICE_NAME, TADEMO_PORT);
     if_abc(g_handle < 0, return GENERIC_ERR, "%s %s", TRUSTY_DEVICE_NAME, TADEMO_PORT);
-    g_mem = malloc(IN_BUF_LEN + OUT_BUF_LEN);
-    if_ab(!g_mem, return GENERIC_ERR);
     return GENERIC_OK;
 }
 

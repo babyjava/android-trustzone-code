@@ -34,6 +34,8 @@ static int init(int tee)
     int status = 0;
     g_device = (struct tee_client_device *)malloc(sizeof(struct tee_client_device));
     if_ab(!g_device, return GENERIC_ERR);
+    g_in = (struct tee_in_buf *)g_device->buf;
+    g_out = (struct tee_out_buf *)(g_device->buf + IN_BUF_LEN);
     pthread_mutex_init(&g_device->mutex, NULL);
     status = g_open[tee](g_device);
     if_ab(status, return GENERIC_ERR);
@@ -45,7 +47,7 @@ static int init(int tee)
 static void release(void)
 {
     g_in->cmd = TEE_CMD_RELEASE;
-    g_device->tee_cmd(g_device);
+    g_device->tee_cmd(g_device, g_in, g_out);
     g_device->tee_exit();
     pthread_mutex_destroy(&g_device->mutex);
     dlclose(g_device->handle);
@@ -82,8 +84,7 @@ static void print_data(void)
 {
     int i = 0;
     uint32_t avg_t;
-    for(i = 0;i < TEE_CMD_END; i++)
-    {
+    for(i = 0;i < TEE_CMD_END; i++){
         avg_t = g_perf[i].cmd_cost_total_time/g_perf[i].cmd_run_times;
         ALOGD("cmd = %d, run times = %d, max time = %d, avg time = %d\n", i, g_perf[i].cmd_run_times, g_perf[i].cmd_cost_max_time, avg_t);
     }
@@ -96,7 +97,7 @@ static void random_stability_performance_test(int times)
     while(times--){
         random_data();
         gettimeofday(&tv1, NULL);
-        g_device->tee_cmd(g_device);
+        g_device->tee_cmd(g_device, g_in, g_out);
         gettimeofday(&tv2, NULL);
         time_cost = tv2.tv_usec - tv1.tv_usec;
         if_abc(g_out->status != GENERIC_OK, break, "%s %d", g_out->sys_err_line, g_out->sys_err);

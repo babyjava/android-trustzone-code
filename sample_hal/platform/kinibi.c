@@ -18,7 +18,7 @@
 
 #define KINIBI_API_LIB "libMcTrusty.so"
 #define TA_PATH "/system/app/mcRegistry/88866600000000000000000000000000.tlbin"
-static void *g_mem;
+static uint8_t *g_mem;
 static mcSessionHandle_t g_session;
 static mcResult_t (*PREFIX(mcOpenDevice))(uint32_t);
 static mcResult_t (*PREFIX(mcCloseDevice))(uint32_t);
@@ -27,16 +27,16 @@ static mcResult_t (*PREFIX(mcNotify))(mcSessionHandle_t *);
 static mcResult_t (*PREFIX(mcWaitNotification))(mcSessionHandle_t *, int32_t);
 static mcResult_t (*PREFIX(mcOpenTrustlet))(mcSessionHandle_t *, mcSpid_t, uint8_t *, uint32_t, uint8_t *, uint32_t);
 
-static int kinibi_cmd(struct tee_client_device *dev)
+static int kinibi_cmd(struct tee_client_device *dev, struct tee_in_buf *in, struct tee_out_buf *out)
 {
     pthread_mutex_lock(&dev->mutex);
     int status = 0;
-    memcpy(g_mem, &dev->in, IN_BUF_LEN);
+    memcpy(g_mem, in, IN_BUF_LEN);
     status = PREFIX(mcNotify)(&g_session);
-    if_abc(status, goto end, "%d %d", dev->in.cmd, status);
+    if_abc(status, goto end, "%d %d", in->cmd, status);
     status = PREFIX(mcWaitNotification)(&g_session, 1000);
-    if_abc(status, goto end, "%d %d", dev->in.cmd, status);
-    memcpy(&dev->out, (uint8_t *)g_mem + IN_BUF_LEN, OUT_BUF_LEN);
+    if_abc(status, goto end, "%d %d", in->cmd, status);
+    memcpy(out, g_mem + IN_BUF_LEN, OUT_BUF_LEN);
 end:
     pthread_mutex_unlock(&dev->mutex);
     return status;
@@ -65,7 +65,7 @@ static int kinibi_init(void)
     if_ab(len < GENERIC_OK, return GENERIC_ERR);
 
     ta_buf = malloc(len);
-    g_mem = malloc(IN_BUF_LEN + OUT_BUF_LEN);
+    g_mem = (uint8_t *)malloc(IN_BUF_LEN + OUT_BUF_LEN);
     if_ab(!ta_buf || !g_mem, return GENERIC_ERR);
 
     status = read(fd, ta_buf, len);
