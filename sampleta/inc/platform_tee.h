@@ -18,6 +18,12 @@
 #include "platform_common.h"
 #include "platform_device.h"
 
+extern struct platform_device *g_dev;
+extern struct tee_in_buf *g_in;
+extern struct tee_out_buf *g_out;
+
+void ta_router(void);
+void platform_init(void);
 
 //microtrust
 #ifdef TEE_ISEE
@@ -89,9 +95,3 @@ void trusty_router(const uevent_t *ev, void* p_func);
 void trusty_accept(const uevent_t *ev, void* p_func);
 #endif
 
-void ta_router(void);
-void platform_init(void);
-
-extern struct platform_device *g_dev;
-extern struct tee_in_buf *g_in;
-extern struct tee_out_buf *g_out;

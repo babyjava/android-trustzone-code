@@ -16,8 +16,22 @@
 #include "platform_tee.h"
 
 void hw_id(void)
-{   int id_len = 2;
-    g_dev->spi_rw(g_in->buf, g_in->buf_len, g_out->buf, id_len);
-    if(g_out->status == GENERIC_OK){
-    }
+{
+    int len = 2;
+    uint8_t buf = {0xaa, 0xbb};
+    g_dev->spi_rw(buf, len, g_out->buf, len);
+}
+
+void hw_sleep(void)
+{
+    int len = 2;
+    uint8_t buf = {0xaa, 0xbb};
+    g_dev->spi_rw(buf, len, NULL, 0);
+}
+
+void hw_wakeup(void)
+{
+    int len = 2;
+    uint8_t buf = {0xaa, 0xbb};
+    g_dev->spi_rw(buf, len, NULL, 0);
 }

@@ -45,4 +45,6 @@ struct platform_device {
 };
 
 void hw_id(void);
+void hw_sleep(void);
+void hw_wakeup(void);
 
