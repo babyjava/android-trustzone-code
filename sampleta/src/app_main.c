@@ -34,8 +34,8 @@ void tz_app_cmd_handler(void* cmd, uint32 cmdlen, void* rsp, uint32 rsplen)
         return;
     }
     memcpy(g_in, cmd, IN_BUF_LEN);
+    g_out = rsp;
     ta_router();
-    memcpy(rsp, g_out, OUT_BUF_LEN);
 }
 
 void tz_app_shutdown(void)
@@ -56,8 +56,8 @@ _TLAPI_ENTRY void tlMain(const addr_t tciBuffer, const uint32_t tciBufferLen)
     for(;;){
         tlApiWaitNotification(TLAPI_INFINITE_TIMEOUT);
         memcpy(g_in, tciBuffer, IN_BUF_LEN);
+        g_out = (tciBuffer + IN_BUF_LEN);
         ta_router();
-        memcpy((tciBuffer + IN_BUF_LEN ), g_out, OUT_BUF_LEN);
         tlApiNotify();
     }
 }
@@ -89,15 +89,19 @@ TEE_Result TA_EXPORT TA_InvokeCommandEntryPoint(void* sessionContext, uint32_t c
         return TEE_ERROR_GENERIC;
     }
     memcpy(g_in, params[0].memref.buffer, IN_BUF_LEN);
+    g_out = params[1].memref.buffer;
     ta_router();
-    memcpy(params[1].memref.buffer, g_out, OUT_BUF_LEN);
     return TEE_SUCCESS;
 }
-void TA_EXPORT TA_CloseSessionEntryPoint(void *sessionContext){
+
+void TA_EXPORT TA_CloseSessionEntryPoint(void *sessionContext)
+{
     (void)sessionContext;
     loge("%s %s", LOG_TAG, __func__);
 }
-void TA_EXPORT TA_DestroyEntryPoint(void){
+
+void TA_EXPORT TA_DestroyEntryPoint(void)
+{
     loge("%s %s", LOG_TAG, __func__);
 }
 #endif
@@ -116,9 +120,8 @@ ut_int32_t ut_pf_fp_invoke_command(ut_pf_fp_cmd_header_t *header, void *data, ut
         return TEE_ERROR_GENERIC;
     }
     memcpy(g_in, data, IN_BUF_LEN);
+    g_out = (data + IN_BUF_LEN);
     ta_router();
-    memcpy((data + IN_BUF_LEN ), g_out, OUT_BUF_LEN);
-    header->data_length = param_length;
     return TEE_SUCCESS;
 }
 #endif

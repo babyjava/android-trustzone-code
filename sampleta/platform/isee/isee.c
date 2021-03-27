@@ -160,8 +160,7 @@ void platform_init(void)
             return;
         }
     }
-    g_in = (struct tee_in_buf *)g_dev->buf;
-    g_out = (struct tee_out_buf *)(g_in + IN_BUF_LEN);
+    g_in = (struct tee_in_buf *)g_dev->io_buf;
     g_dev->free = free,
     g_dev->malloc = malloc,
     g_dev->spi_rw = isee_spi_rw,

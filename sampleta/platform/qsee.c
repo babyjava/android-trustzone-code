@@ -43,8 +43,7 @@ static void qsee_spi_rw(void *in, uint32_t in_len, void *out, uint32_t out_len){
     g_out->sys_err = qsee_spi_full_duplex(g_in->spi_num, &g_spi_config, &spi_w, &spi_r);
     if_err(g_out->sys_err, );
 
-    g_out->sys_err = qsee_spi_close(g_in->spi_num);
-    if_err(g_out->sys_err,  );
+    qsee_spi_close(g_in->spi_num);
 }
 
 static void qsee_i2c_rw(void)
@@ -174,8 +173,7 @@ void platform_init(struct platform_device *dev){
             return;
         }
     }
-    g_in = (struct tee_in_buf *)g_dev->buf;
-    g_out = (struct tee_out_buf *)(g_in + IN_BUF_LEN);
+    g_in = (struct tee_in_buf *)g_dev->io_buf;
     g_dev->free = qsee_free,
     g_dev->sfs_read = qsee_read,
     g_dev->sfs_write = qsee_write,

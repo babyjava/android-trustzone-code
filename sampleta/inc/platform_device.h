@@ -15,7 +15,7 @@
 */
 #define TA_VERSION "1.0.0.0"
 #define LOG_TAG "talog"
-#define LOG_RECORD snprintf(g_out->sys_err_line, sizeof(g_out->sys_err_line), LOG_TAG "err %s:%d", __FILE__, __LINE__);g_out->status = GENERIC_ERR;
+#define LOG_RECORD snprintf(g_out->err_line, sizeof(g_out->err_line), LOG_TAG "err %s:%d", __FILE__, __LINE__);g_out->status = GENERIC_ERR;
 #define if_err(a, b); if(a) { LOG_RECORD b; }
 
 typedef void (*V_FUNC)(void);
@@ -40,7 +40,7 @@ struct platform_device {
     void (*uptime)(uint64_t *t);
     void* (*malloc)(size_t s);
     void (*free)(void *p);
-    uint8_t buf[IN_BUF_LEN + OUT_BUF_LEN];
+    uint8_t io_buf[IN_BUF_LEN + OUT_BUF_LEN];
     uint8_t iv[32];
 };
 

@@ -21,6 +21,7 @@ struct tee_out_buf *g_out;
 
 static void spi_test(void)
 {
+    g_out->buf_len = g_in->buf_len;
     g_dev->spi_rw(g_in->buf, g_in->buf_len, g_out->buf, g_out->buf_len);
 }
 
@@ -39,7 +40,7 @@ static void read_rest(void)
     g_dev->sfs_read(g_in->name, g_out->buf, &g_out->buf_len);
 }
 
-static void init(void)
+static void read_id(void)
 {
     hw_id();
 }
@@ -53,7 +54,7 @@ static void (*ta_cmd[])(void) = {
     i2c_test,
     write_test,
     read_rest,
-    init,
+    read_id,
     release,
 };
 

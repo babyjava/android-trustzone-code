@@ -169,8 +169,7 @@ void platform_init(){
             return;
         }
     }
-    g_in = (struct tee_in_buf *)g_dev->buf;
-    g_out = (struct tee_out_buf *)(g_in + IN_BUF_LEN);
+    g_in = (struct tee_in_buf *)g_dev->io_buf;
     g_dev->free = tlApiFree,
     g_dev->read = kinibi_read,
     g_dev->write = kinibi_write,

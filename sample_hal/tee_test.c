@@ -100,7 +100,7 @@ static void random_stability_performance_test(int times)
         g_device->tee_cmd(g_device, g_in, g_out);
         gettimeofday(&tv2, NULL);
         time_cost = tv2.tv_usec - tv1.tv_usec;
-        if_abc(g_out->status != GENERIC_OK, break, "%s %d", g_out->sys_err_line, g_out->sys_err);
+        if_abc(g_out->status != GENERIC_OK, break, "%s %d", g_out->err_line, g_out->sys_err);
         collect_data(time_cost);
     }
     print_data();

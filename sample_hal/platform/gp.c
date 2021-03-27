@@ -41,9 +41,8 @@ static int gp_cmd(struct tee_client_device *dev,  struct tee_in_buf *in, struct 
     pthread_mutex_lock(&dev->mutex);
     memcpy(g_in_mem.buffer, in, IN_BUF_LEN);
     int status = PREFIX(TEEC_InvokeCommand)(&g_session, GP_CMD, &g_operation, NULL);
-    if_abc(status != GENERIC_OK, goto end, "%d %d", in->cmd, status);
+    if_abc(status != GENERIC_OK,  , "%d %d", in->cmd, status);
     memcpy(out, g_out_mem.buffer, OUT_BUF_LEN);
-end:
     pthread_mutex_unlock(&dev->mutex);
     return status;
 }

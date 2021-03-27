@@ -30,7 +30,7 @@ static int trusty_cmd(struct tee_client_device *dev, struct tee_in_buf *in, stru
     ssize_t len = write(g_handle, in, IN_BUF_LEN);
     if_abc(len != IN_BUF_LEN, status = GENERIC_ERR; goto end, "%d %zd", in->cmd, len);
     len = read(g_handle, out, OUT_BUF_LEN);
-    if_abc(len != OUT_BUF_LEN, status = GENERIC_ERR; goto end, "%d %zd", in->cmd, len);
+    if_abc(len != OUT_BUF_LEN, status = GENERIC_ERR;  , "%d %zd", in->cmd, len);
 end:
     pthread_mutex_unlock(&dev->mutex);
     return status;

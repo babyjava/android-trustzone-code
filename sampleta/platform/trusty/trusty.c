@@ -152,8 +152,8 @@ void platform_init(void)
             return;
         }
     }
-    g_in = (struct tee_in_buf *)g_dev->buf;
-    g_out = (struct tee_out_buf *)(g_in + IN_BUF_LEN);
+    g_in = (struct tee_in_buf *)g_dev->io_buf;
+    g_out = (struct tee_out_buf *)(g_dev->io_buf + IN_BUF_LEN);
     g_dev->free = free,
     g_dev->malloc = malloc,
     g_dev->sleep = trusty_sleep,
@@ -170,8 +170,8 @@ void platform_init(void)
 void trusty_router(const uevent_t *ev, void* p_func)
 {
     long rc = 0;
+    iovec_t iov;
     ipc_msg_info_t in_buf;
-    struct iovec iov = { g_dev->buf, in_buf.len };
     ipc_msg_t msg = {1, &iov, 0, NULL};
 
     if (!(ev->event & IPC_HANDLE_POLL_MSG)) {
@@ -183,6 +183,8 @@ void trusty_router(const uevent_t *ev, void* p_func)
         loge("%s, err get msg rc = %ld\n", __func__, rc);
         return;
     }
+    iov.base = g_in;
+    iov.len = in_buf.len;
     rc = read_msg(ev->handle, in_buf.id, 0, &msg);
     if(rc != IN_BUF_LEN){
         loge("%s, err buf len = %ld - %d\n", __func__, rc, IN_BUF_LEN);
@@ -194,6 +196,8 @@ void trusty_router(const uevent_t *ev, void* p_func)
         return;
     }
     ta_router();
+    iov.base = g_out;
+    iov.len = OUT_BUF_LEN;
     rc = send_msg(ev->handle, &msg);
     if (rc < 0) {
         loge("%s, err send_msg rc = %ld\n", __func__, rc);
