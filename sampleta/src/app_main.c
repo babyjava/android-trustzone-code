@@ -19,8 +19,8 @@
 void tz_app_init(void)
 {
    qsee_log_set_mask(QSEE_LOG_MSG_FATAL | QSEE_LOG_MSG_ERROR | QSEE_LOG_MSG_DEBUG);
-   logd("%s",__func__);
    platform_init();
+   logd("%s",__func__);
 }
 
 void tz_app_cmd_handler(void* cmd, uint32 cmdlen, void* rsp, uint32 rsplen)
@@ -65,16 +65,22 @@ _TLAPI_ENTRY void tlMain(const addr_t tciBuffer, const uint32_t tciBufferLen)
 
 #ifdef TEE_GP
 #include <tee_internal_api.h>
-TEE_Result TA_EXPORT TA_CreateEntryPoint(void){
-   loge("%s %s", LOG_TAG, __func__);
+TEE_Result TA_EXPORT TA_CreateEntryPoint(void)
+{
+    loge("%s %s", LOG_TAG, __func__);
+    platform_init();
     return TEE_SUCCESS;
 }
-TEE_Result TA_EXPORT TA_OpenSessionEntryPoint(uint32_t paramTypes, TEE_Param params[4], void** sessionContext){
+
+TEE_Result TA_EXPORT TA_OpenSessionEntryPoint(uint32_t paramTypes, TEE_Param params[4], void** sessionContext)
+{
     (void)paramTypes; (void)params; (void)sessionContext;
     loge("%s %s", LOG_TAG, __func__);
     return TEE_SUCCESS;
 }
-TEE_Result TA_EXPORT TA_InvokeCommandEntryPoint(void* sessionContext, uint32_t commandID, uint32_t paramTypes, TEE_Param params[4]){
+
+TEE_Result TA_EXPORT TA_InvokeCommandEntryPoint(void* sessionContext, uint32_t commandID, uint32_t paramTypes, TEE_Param params[4])
+{
     (void)sessionContext;
     if((IN_BUF_LEN != params[0].memref.size) || (OUT_BUF_LEN != params[1].memref.size)){
         loge("err cmdlen = %d - %d, rsplen = %d - %d", params[0].memref.size, IN_BUF_LEN, params[1].memref.size, OUT_BUF_LEN);

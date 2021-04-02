@@ -24,7 +24,7 @@
 struct tee_in_buf
 {
     uint32_t cmd;
-    char name[32];
+    char str[32];
     uint32_t spi_num;
     uint32_t i2c_num;
     uint32_t buf_len;

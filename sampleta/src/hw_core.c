@@ -31,12 +31,12 @@ static void i2c_test(void)
 
 static void write_test(void)
 {
-    g_dev->sfs_write(g_in->name, g_in->buf, g_in->buf_len);
+    g_dev->sfs_write(g_in->str, g_in->buf, g_in->buf_len);
 }
 
 static void read_test(void)
 {
-    g_dev->sfs_read(g_in->name, g_out->buf, &g_out->buf_len);
+    g_dev->sfs_read(g_in->str, g_out->buf, &g_out->buf_len);
 }
 
 static void read_id(void)
